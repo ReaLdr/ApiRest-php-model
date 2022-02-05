@@ -16,7 +16,7 @@ class Cliente_model extends CI_Model {
     public $direccion;
 
     public function get_cliente( $id ){
-        $this->db->where( array( 'id'=>$id, 'activo' => 1 ) );
+        $this->db->where( array( 'id'=>$id, 'status' => 'activo' ) );
         $query = $this->db->get( 'clientes' );
 
         $row = $query->custom_row_object(0, 'Cliente_model');
@@ -86,12 +86,71 @@ class Cliente_model extends CI_Model {
     }
     
     public function update(){
-        return "Actualizado";
+        
+        // Verificar el correo
+        $this->db->where( 'correo =', $this->correo );
+        $this->db->where( 'id !=', $this->id );
+        $query = $this->db->get( 'clientes' );
+
+        $cliente_correo = $query->row();
+
+        if(isset( $cliente_correo )){
+            // EXISTE
+            $respuesta = array( 'err' =>TRUE, 'mensaje' => 'El correo electrónico ya está registrado por otro usuario' );
+            // $this->response( $respuesta, RestController::HTTP_BAD_REQUEST );
+            return $respuesta;
+        }
+
+        $this->db->reset_query();
+
+        $this->db->where('id', $this->id );
+
+        $exe_insert = $this->db->update('clientes', $this );
+
+        if($exe_insert){
+            // insertado
+            $respuesta = array(
+                'err' => FALSE,
+                'mensaje' => 'Registro actualizado correctamente',
+                'cliente_id' => $this->id
+            );
+        } else{
+            // no sucedio
+            $respuesta = array(
+                'err' =>TRUE,
+                'mensaje' => 'Error al actualizar',
+                'error' => $this->db->_error_message(),
+                'error_num' => $this->db->_error_number() );
+        }
+
+        return $respuesta;
+        
     }
     
     
-    public function detele(){
-        return "Borrado";
+    public function delete( $cliente_id ){
+
+        $this->db->set('status', 'borrado');
+        $this->db->where('id', $cliente_id);
+
+        $exe_delete = $this->db->update('clientes');
+
+        if($exe_delete){
+            // insertado
+            $respuesta = array(
+                'err' => FALSE,
+                'mensaje' => 'Registro eliminado correctamente'
+            );
+        } else{
+            // no sucedio
+            $respuesta = array(
+                'err' =>TRUE,
+                'mensaje' => 'Error al eliminar',
+                'error' => $this->db->_error_message(),
+                'error_num' => $this->db->_error_number() );
+        }
+
+        return $respuesta;
     }
 
 

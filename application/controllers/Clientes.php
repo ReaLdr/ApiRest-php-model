@@ -32,6 +32,15 @@ class Clientes extends RestController {
         $this->response( $respuesta );
     }
 
+    public function cliente_delete(){
+                
+        $cliente_id     = $this->uri->segment(3);
+
+        $respuesta = $this->Cliente_model->delete($cliente_id);
+
+        $this->response($respuesta);
+    }
+
     public function cliente_put(){
         $data = $this->put();
 
@@ -45,6 +54,37 @@ class Clientes extends RestController {
             // Todo bien
             $cliente = $this->Cliente_model->set_datos($data);
             $respuesta = $cliente->insert();
+            if($respuesta['err']){
+                $this->response( $respuesta, RestController::HTTP_BAD_REQUEST );
+            } else{
+                $this->response( $respuesta );
+            }
+            
+        } else{
+            // Algo mal
+            $respuesta = array( 'err' => TRUE, 'mensaje' => 'Hay errores en el envío de información', 'errores' => $this->form_validation->get_errores_arreglo() );
+
+            $this->response( $respuesta, RestController::HTTP_BAD_REQUEST );
+        }
+    }
+
+    public function cliente_post(){
+
+        $cliente_id = $this->uri->segment(3);
+
+        $data = $this->post();
+        $data['id'] = $cliente_id;
+
+        $this->load->library('form_validation');
+
+        $this->form_validation->set_data( $data );
+
+        // $this->form_validation->set_rules( 'correo', 'correo electronico', 'required|valid_email' );
+
+        if($this->form_validation->run( 'cliente_post' )) { //TRUE:: TODO BIEN | FALSE:: FALLA ALGUNA REGLA
+            // Todo bien
+            $cliente = $this->Cliente_model->set_datos($data);
+            $respuesta = $cliente->update();
             if($respuesta['err']){
                 $this->response( $respuesta, RestController::HTTP_BAD_REQUEST );
             } else{
